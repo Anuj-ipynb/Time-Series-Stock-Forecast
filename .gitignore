@@ -39,9 +39,7 @@ Thumbs.db
 *.stan
 cmdstanpy/
 
-# Metrics and forecast plots (keep locally, ignore if regenerated every run)
-metrics/*.json
-*.png
+
 
 # Streamlit secrets
 .streamlit/secrets.toml

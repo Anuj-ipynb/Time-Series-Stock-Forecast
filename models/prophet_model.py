@@ -1,3 +1,4 @@
+# prophet_model.py
 import pandas as pd
 import matplotlib.pyplot as plt
 from prophet import Prophet
@@ -6,26 +7,31 @@ import numpy as np
 import warnings
 import os
 import json
+import sys
 
 warnings.filterwarnings("ignore")
 
+# Accept dynamic forecast period
+forecast_period = int(sys.argv[1]) if len(sys.argv) > 1 else 12
+
+# Load and preprocess data
 df = pd.read_csv("AAPL_cleaned.csv", index_col=0)
 df.index = pd.to_datetime(df.index)
 monthly_df = df['Close'].resample('M').mean().dropna().reset_index()
 monthly_df.columns = ['ds', 'y']
 
 # Train/test split
-train = monthly_df[:-12]
-test = monthly_df[-12:]
+train = monthly_df[:-forecast_period]
+test = monthly_df[-forecast_period:]
 
+# Train Prophet model
 model = Prophet()
 model.fit(train)
 
-future = model.make_future_dataframe(periods=12, freq='M')
+# Forecast future
+future = model.make_future_dataframe(periods=forecast_period, freq='M')
 forecast = model.predict(future)
-
-# Extract only the forecasted part
-forecast_subset = forecast[-12:]
+forecast_subset = forecast[-forecast_period:]
 
 # Plot
 plt.figure(figsize=(12, 6))
@@ -42,9 +48,14 @@ y_true = test['y'].values
 y_pred = forecast_subset['yhat'].values
 
 mae = mean_absolute_error(y_true, y_pred)
-rmse = mean_squared_error(y_true, y_pred, squared= False)
+rmse = mean_squared_error(y_true, y_pred, squared=False)
 mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
+# Save metrics
 os.makedirs("metrics", exist_ok=True)
 with open("metrics/prophet_metrics.json", "w") as f:
-    json.dump({"MAE": float(mae), "RMSE": float(rmse), "MAPE": float(mape)}, f)
+    json.dump({
+        "MAE": float(mae),
+        "RMSE": float(rmse),
+        "MAPE": float(mape)
+    }, f)

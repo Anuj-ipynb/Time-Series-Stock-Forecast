@@ -77,3 +77,20 @@ if best_mae == best_rmse == best_mape:
     st.success(f"🏆 Overall Best Performing Model: **{best_mae}**")
 else:
     st.info("ℹ️ Different models perform better on different metrics. Choose based on your priority (e.g., lower % error or fewer outliers).")
+uploaded_file = st.file_uploader("Upload your own stock CSV", type=["csv"])
+if uploaded_file:
+    df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
+else:
+    df = pd.read_csv("AAPL_cleaned.csv", index_col=0, parse_dates=True)
+
+import subprocess
+forecast_period = st.slider("Forecast Months", 3, 24, 12)
+if selected_model == "ARIMA":
+    subprocess.run(["python", "models/arima_model.py", str(forecast_period)])
+elif selected_model == "LSTM":
+    subprocess.run(["python", "models/lstm_model.py", str(forecast_period)])
+elif selected_model == "Prophet":
+    subprocess.run(["python", "models/prophet_model.py", str(forecast_period)])
+elif selected_model == "SARIMA":
+    subprocess.run(["python", "models/sarima_model.py", str(forecast_period)])
+

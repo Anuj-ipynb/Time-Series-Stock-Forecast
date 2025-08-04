@@ -9,8 +9,12 @@ from keras.layers import LSTM, Dense
 import json
 import os
 import warnings
+import sys
 
 warnings.filterwarnings("ignore")
+
+# Accept dynamic forecast period
+forecast_period = int(sys.argv[1]) if len(sys.argv) > 1 else 12
 
 # Load data
 df = pd.read_csv("AAPL_cleaned.csv", index_col=0, parse_dates=True)
@@ -24,7 +28,7 @@ scaled = scaler.fit_transform(data)
 # Create dataset
 def create_dataset(dataset, time_step=12):
     X, y = [], []
-    for i in range(len(dataset)-time_step-1):
+    for i in range(len(dataset) - time_step - 1):
         X.append(dataset[i:i+time_step, 0])
         y.append(dataset[i + time_step, 0])
     return np.array(X), np.array(y)
@@ -34,10 +38,10 @@ X, y = create_dataset(scaled, time_step)
 X = X.reshape(X.shape[0], X.shape[1], 1)
 
 # Split
-y_train = y[:-12]
-y_test = y[-12:]
-X_train = X[:-12]
-X_test = X[-12:]
+X_train = X[:-forecast_period]
+X_test = X[-forecast_period:]
+y_train = y[:-forecast_period]
+y_test = y[-forecast_period:]
 
 # Build and train model
 model = Sequential([
@@ -55,28 +59,20 @@ actual_prices = scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
 
 # Metrics
 mae = mean_absolute_error(actual_prices, predicted_prices)
-rmse = mean_squared_error(actual_prices, predicted_prices, squared= False)
+rmse = mean_squared_error(actual_prices, predicted_prices, squared=False)
 mape = np.mean(np.abs((actual_prices - predicted_prices) / actual_prices)) * 100
 
 # Save metrics
 os.makedirs("metrics", exist_ok=True)
-metrics = {"MAE": mae, "RMSE": rmse, "MAPE": mape}
+metrics = {"MAE": float(mae), "RMSE": float(rmse), "MAPE": float(mape)}
 with open("metrics/lstm_metrics.json", "w") as f:
     json.dump(metrics, f)
 
 # Plot
-# Reconstruct full series for plotting
-train_len = len(monthly) - 12
 full_index = monthly.index
-
-# Prepare a full predicted series
-full_series = monthly.copy()
-full_series.iloc[-12:] = predicted_prices  # Replace last 12 points with predicted
-
-# Plot
 plt.figure(figsize=(12, 6))
 plt.plot(monthly, label="Actual")
-plt.plot(full_index[-12:], predicted_prices, label="LSTM Forecast", linestyle='--')
+plt.plot(full_index[-forecast_period:], predicted_prices, label="LSTM Forecast", linestyle='--')
 plt.title("LSTM Forecast")
 plt.grid(True)
 plt.legend()
