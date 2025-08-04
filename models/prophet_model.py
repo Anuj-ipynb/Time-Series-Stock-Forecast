@@ -8,6 +8,7 @@ import warnings
 import os
 import json
 import sys
+import streamlit as st
 
 warnings.filterwarnings("ignore")
 
@@ -15,7 +16,15 @@ warnings.filterwarnings("ignore")
 forecast_period = int(sys.argv[1]) if len(sys.argv) > 1 else 12
 
 # Load and preprocess data
-df = pd.read_csv("AAPL_cleaned.csv", index_col=0)
+import yfinance as yf
+
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    data = yf.download(ticker, start="2010-01-01", end=None)
+    return data
+
+df = load_stock_data("AAPL")  # or pass user's selected ticker
+
 df.index = pd.to_datetime(df.index)
 monthly_df = df['Close'].resample('M').mean().dropna().reset_index()
 monthly_df.columns = ['ds', 'y']

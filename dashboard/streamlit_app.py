@@ -16,6 +16,8 @@ plot_path = f"{model_key}_forecast.png"
 
 col1, col2 = st.columns(2)
 
+
+
 with col1:
     st.subheader("📊 Forecast Plot")
     if os.path.exists(plot_path):
@@ -78,10 +80,19 @@ if best_mae == best_rmse == best_mape:
 else:
     st.info("ℹ️ Different models perform better on different metrics. Choose based on your priority (e.g., lower % error or fewer outliers).")
 uploaded_file = st.file_uploader("Upload your own stock CSV", type=["csv"])
-if uploaded_file:
-    df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
-else:
-    df = pd.read_csv("AAPL_cleaned.csv", index_col=0, parse_dates=True)
+import yfinance as yf
+
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    data = yf.download(ticker, start="2010-01-01")
+    return data
+
+ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT):", value="AAPL")
+df = load_stock_data(ticker)
+
+if df.empty:
+    st.error("⚠ Failed to load data. Check ticker symbol or internet connection.")
+
 
 import subprocess
 forecast_period = st.slider("Forecast Months", 3, 24, 12)

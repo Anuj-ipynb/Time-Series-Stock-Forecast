@@ -1,8 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
+import streamlit as st
+import yfinance as yf
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    data = yf.download(ticker, start="2010-01-01", end=None)
+    return data
 
-df = pd.read_csv("AAPL_cleaned.csv", index_col=0)
+df = load_stock_data("AAPL")
 df.index = pd.to_datetime(df.index)
 
 # Plot

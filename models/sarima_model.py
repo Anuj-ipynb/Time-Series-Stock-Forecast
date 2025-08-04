@@ -6,10 +6,18 @@ import numpy as np
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
+import streamlit as st
 
 warnings.filterwarnings("ignore")
+import yfinance as yf
 
-df = pd.read_csv("AAPL_cleaned.csv", index_col=0)
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    data = yf.download(ticker, start="2010-01-01", end=None)
+    return data
+
+df = load_stock_data("AAPL")  # or pass user's selected ticker
+
 df.index = pd.to_datetime(df.index)
 monthly_df = df['Close'].resample('M').mean().dropna()
 

@@ -1,7 +1,13 @@
 import pandas as pd
+import streamlit as st
+import yfinance as yf
 
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    data = yf.download(ticker, start="2010-01-01", end=None)
+    return data
 
-df = pd.read_csv("AAPL_stock_data.csv")
+df = load_stock_data("AAPL")
 
 if 'Unnamed: 0' in df.columns:
     df.rename(columns={'Unnamed: 0': 'Date'}, inplace=True)
