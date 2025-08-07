@@ -40,12 +40,14 @@ elif selected_model == "SARIMA":
     subprocess.run(["python", "models/sarima_model.py", str(forecast_period)])
 
 # --- Run seasonal decomposition script with ticker & forecast_period ---
-subprocess.run(["python", "decomposition_plot.py", str(forecast_period), ticker])
+decomp_plot_path = f"plots/decomposition_plot_{ticker.upper()}_{forecast_period}.png"
+subprocess.run(["python", "models/decomposition_plot.py", str(forecast_period), ticker])
 
 # --- Forecast Plot + Metrics Display ---
 model_key = selected_model.lower()
 metric_path = f"metrics/{model_key}_metrics.json"
-plot_path = f"{model_key}_forecast.png"
+plot_path = f"plots/{model_key}_forecast_{ticker.upper()}.png"
+
 
 col1, col2 = st.columns(2)
 
@@ -71,10 +73,11 @@ with col2:
         st.warning("Metrics file not found or empty.")
 
 with st.expander("📉 Show Seasonal Decomposition"):
-    if os.path.exists("decomposition_plot.png"):
-        st.image("decomposition_plot.png", caption="Additive Seasonal Decomposition", use_container_width=True)
+    if os.path.exists(decomp_plot_path):
+        st.image(decomp_plot_path, caption=f"Additive Seasonal Decomposition ({ticker.upper()}, {forecast_period} months)", use_container_width=True)
     else:
-        st.info("Run `decomposition_plot.py` to generate this.")
+        st.info("Decomposition plot not found. Make sure model ran correctly.")
+
 # --- Exploratory Data Analysis (EDA) ---
 from statsmodels.tsa.stattools import adfuller
 import matplotlib.pyplot as plt
@@ -121,9 +124,9 @@ for key in model_keys:
 if metric_data:
     df_metrics = pd.DataFrame(metric_data).T 
     st.dataframe(df_metrics.style.format({
-        "MAE": "{:.2f}",
-        "RMSE": "{:.2f}",
-        "MAPE": "{:.2f}"
+        "Mean Absolute Error": "{:.2f}",
+        "Root Mean Square Error": "{:.2f}",
+        "Mean Absolute Percentage Error": "{:.2f}"
     }), use_container_width=True)
 
     # Identify best models
