@@ -2,26 +2,57 @@ import streamlit as st
 import json
 from PIL import Image
 import os
+import subprocess
+import pandas as pd
+import yfinance as yf
 
+# --- Streamlit Page Config ---
 st.set_page_config(page_title="Time Series Forecasting", layout="wide")
 st.title("📈 Time Series Stock Forecasting")
-st.write("Compare ARIMA, SARIMA, Prophet, and LSTM models on Apple Inc. stock prices.")
+st.write("Compare ARIMA, SARIMA, Prophet, and LSTM models on stock prices.")
 
+# --- Ticker Input + Load Data ---
+ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT):", value="AAPL")
+
+@st.cache_data
+def load_stock_data(ticker="AAPL"):
+    return yf.download(ticker, start="2010-01-01")
+
+df = load_stock_data(ticker)
+
+if df.empty:
+    st.error("⚠ Failed to load data. Check ticker symbol or internet connection.")
+
+# --- Forecast Period Slider ---
+forecast_period = st.slider("Forecast Months", 3, 24, 12)
+
+# --- Run selected model script BEFORE showing metrics/plots ---
 models = ["ARIMA", "SARIMA", "Prophet", "LSTM"]
 selected_model = st.selectbox("Choose a model to view forecast & metrics:", models)
 
+if selected_model == "ARIMA":
+    subprocess.run(["python", "models/arima_model.py", str(forecast_period)])
+elif selected_model == "LSTM":
+    subprocess.run(["python", "models/lstm_model.py", str(forecast_period)])
+elif selected_model == "Prophet":
+    subprocess.run(["python", "models/prophet_model.py", str(forecast_period)])
+elif selected_model == "SARIMA":
+    subprocess.run(["python", "models/sarima_model.py", str(forecast_period)])
+
+# --- Run seasonal decomposition script with ticker & forecast_period ---
+subprocess.run(["python", "decomposition_plot.py", str(forecast_period), ticker])
+
+# --- Forecast Plot + Metrics Display ---
 model_key = selected_model.lower()
 metric_path = f"metrics/{model_key}_metrics.json"
 plot_path = f"{model_key}_forecast.png"
 
 col1, col2 = st.columns(2)
 
-
-
 with col1:
     st.subheader("📊 Forecast Plot")
     if os.path.exists(plot_path):
-        st.image(Image.open(plot_path), use_container_width=True)  # ✅ Updated here
+        st.image(Image.open(plot_path), use_container_width=True)
     else:
         st.warning("Forecast plot not found.")
 
@@ -44,64 +75,3 @@ with st.expander("📉 Show Seasonal Decomposition"):
         st.image("decomposition_plot.png", caption="Additive Seasonal Decomposition", use_container_width=True)
     else:
         st.info("Run `decomposition_plot.py` to generate this.")
-import pandas as pd
-
-# Load all metrics
-model_keys = ["arima", "sarima", "prophet", "lstm"]
-metric_data = {}
-
-for key in model_keys:
-    path = f"metrics/{key}_metrics.json"
-    if os.path.exists(path) and os.path.getsize(path) > 0:
-        with open(path, "r") as f:
-            try:
-                metric_data[key.upper()] = json.load(f)
-            except json.JSONDecodeError:
-                continue
-
-# Convert to DataFrame for comparison
-df_metrics = pd.DataFrame(metric_data).T  # Transpose for model-wise rows
-
-# Best model based on each metric
-best_mae = df_metrics['MAE'].idxmin()
-best_rmse = df_metrics['RMSE'].idxmin()
-best_mape = df_metrics['MAPE'].idxmin()
-
-st.subheader("📌 Model Inference Based on Metrics")
-
-st.markdown(f"""
-- ✅ **Best MAE**: {best_mae} with MAE = {df_metrics['MAE'].min():.2f}
-- ✅ **Best RMSE**: {best_rmse} with RMSE = {df_metrics['RMSE'].min():.2f}
-- ✅ **Best MAPE**: {best_mape} with MAPE = {df_metrics['MAPE'].min():.2f}%
-""")
-
-if best_mae == best_rmse == best_mape:
-    st.success(f"🏆 Overall Best Performing Model: **{best_mae}**")
-else:
-    st.info("ℹ️ Different models perform better on different metrics. Choose based on your priority (e.g., lower % error or fewer outliers).")
-uploaded_file = st.file_uploader("Upload your own stock CSV", type=["csv"])
-import yfinance as yf
-
-@st.cache_data
-def load_stock_data(ticker="AAPL"):
-    data = yf.download(ticker, start="2010-01-01")
-    return data
-
-ticker = st.text_input("Enter stock ticker (e.g., AAPL, MSFT):", value="AAPL")
-df = load_stock_data(ticker)
-
-if df.empty:
-    st.error("⚠ Failed to load data. Check ticker symbol or internet connection.")
-
-
-import subprocess
-forecast_period = st.slider("Forecast Months", 3, 24, 12)
-if selected_model == "ARIMA":
-    subprocess.run(["python", "models/arima_model.py", str(forecast_period)])
-elif selected_model == "LSTM":
-    subprocess.run(["python", "models/lstm_model.py", str(forecast_period)])
-elif selected_model == "Prophet":
-    subprocess.run(["python", "models/prophet_model.py", str(forecast_period)])
-elif selected_model == "SARIMA":
-    subprocess.run(["python", "models/sarima_model.py", str(forecast_period)])
-
