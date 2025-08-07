@@ -14,6 +14,7 @@ import streamlit as st
 
 warnings.filterwarnings("ignore")
 
+
 # Accept dynamic forecast period
 forecast_period = int(sys.argv[1]) if len(sys.argv) > 1 else 12
 
@@ -86,5 +87,6 @@ plt.title("LSTM Forecast")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("lstm_forecast.png")
+os.makedirs("plots", exist_ok=True)
+plt.savefig(f"plots/lstm_forecast_{ticker}.png")
 plt.close()
