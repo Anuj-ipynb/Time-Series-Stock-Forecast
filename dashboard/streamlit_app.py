@@ -140,5 +140,6 @@ if metric_data:
     if best_mae == best_rmse == best_mape:
         st.success(f"🏆 Overall Best Performing Model: **{best_mae}**")
     else:
+        st.warning("No evaluation metrics found to compare models.")
 
 
