@@ -44,7 +44,8 @@ plt.title("ARIMA Forecast")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("arima_forecast.png")
+os.makedirs("plots", exist_ok=True)
+plt.savefig(f"plots/arima_forecast_{ticker}.png")
 
 # Ensure the 'metrics' directory exists
 os.makedirs("metrics", exist_ok=True)
