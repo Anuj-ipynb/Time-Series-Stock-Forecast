@@ -50,7 +50,8 @@ plt.title("Prophet Forecast")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("prophet_forecast.png")
+os.makedirs("plots", exists_ok=True)
+plt.savefig(f"plots/prophet_forecast_{ticker}.png")
 
 # Evaluate
 y_true = test['y'].values
