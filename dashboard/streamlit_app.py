@@ -102,4 +102,43 @@ if not df.empty:
     """)
 else:
     st.warning("No data available to perform EDA.")
+# --- Best Model Comparison Section ---
+st.subheader("🏆 Best Model Comparison")
+
+model_keys = ["arima", "sarima", "prophet", "lstm"]
+metric_data = {}
+
+for key in model_keys:
+    path = f"metrics/{key}_metrics.json"
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        with open(path, "r") as f:
+            try:
+                metric_data[key.upper()] = json.load(f)
+            except json.JSONDecodeError:
+                continue
+
+
+if metric_data:
+    df_metrics = pd.DataFrame(metric_data).T 
+    st.dataframe(df_metrics.style.format({
+        "MAE": "{:.2f}",
+        "RMSE": "{:.2f}",
+        "MAPE": "{:.2f}"
+    }), use_container_width=True)
+
+    # Identify best models
+    best_mae = df_metrics['MAE'].idxmin()
+    best_rmse = df_metrics['RMSE'].idxmin()
+    best_mape = df_metrics['MAPE'].idxmin()
+
+    st.markdown(f"""
+    - ✅ **Best MAE**: `{best_mae}` with MAE = `{df_metrics['MAE'].min():.2f}`
+    - ✅ **Best RMSE**: `{best_rmse}` with RMSE = `{df_metrics['RMSE'].min():.2f}`
+    - ✅ **Best MAPE**: `{best_mape}` with MAPE = `{df_metrics['MAPE'].min():.2f}%`
+    """)
+
+    if best_mae == best_rmse == best_mape:
+        st.success(f"🏆 Overall Best Performing Model: **{best_mae}**")
+    else:
+
 
