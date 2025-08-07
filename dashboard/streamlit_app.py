@@ -75,3 +75,31 @@ with st.expander("📉 Show Seasonal Decomposition"):
         st.image("decomposition_plot.png", caption="Additive Seasonal Decomposition", use_container_width=True)
     else:
         st.info("Run `decomposition_plot.py` to generate this.")
+# --- Exploratory Data Analysis (EDA) ---
+from statsmodels.tsa.stattools import adfuller
+import matplotlib.pyplot as plt
+
+st.subheader("🔍 Exploratory Data Analysis (EDA)")
+
+# Plot closing prices
+if not df.empty:
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.plot(df['Close'], label='Close Price')
+    ax.set_title(f"{ticker.upper()} Closing Price")
+    ax.grid(True)
+    ax.legend()
+    st.pyplot(fig)
+
+    # ADF Test
+    monthly = df['Close'].resample('M').mean()
+    result = adfuller(monthly.dropna())
+
+    st.markdown("**Augmented Dickey-Fuller (ADF) Test**")
+    st.markdown(f"""
+    - **ADF Statistic**: `{result[0]:.4f}`
+    - **p-value**: `{result[1]:.4f}`
+    - **Stationarity**: {"✅ Likely Stationary" if result[1] < 0.05 else "❌ Likely Non-Stationary"}
+    """)
+else:
+    st.warning("No data available to perform EDA.")
+
