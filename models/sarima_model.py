@@ -42,7 +42,8 @@ plt.title("SARIMA Forecast")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("sarima_forecast.png")
+os.makedirs("plots", exists_ok=True)
+plt.savefig(f"plots/sarima_forecast_{ticker}.png")
 
 # Evaluate
 y_true = test.values
